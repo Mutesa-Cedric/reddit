@@ -11,10 +11,11 @@ import {
 
 } from '@heroicons/react/outline'
 import Link from "next/link"
-import { signIn } from "next-auth/react"
+import { signIn, signOut, useSession } from "next-auth/react"
 function Header() {
+    const { data: session } = useSession();
     return (
-        <div className="flex sticky top-0 z-50 bg-white px-4 py-2 shadow-sm">
+        <div className="flex sticky top-0 z-50 bg-white items-center px-4 py-2 shadow-sm">
             <div className="relative w-20 h-10 flex-shrink-0 cursor-pointer">
                 <Image src={'/images/logo.webp'} layout="fill" objectFit="contain" />
             </div>
@@ -45,13 +46,29 @@ function Header() {
             </div>
 
             {/* signin /signout */}
-            <div onClick={()=>signIn()} className="hidden lg:flex border border-gray-100 items-center cursor-pointer space-x-2 p-2">
-                <div className="relative h-5 w-5 flex-shrink-0">
-                    <Image objectFit="contain" src={'https://logoeps.com/wp-content/uploads/2014/09/52053-reddit-logo-icon-vector-icon-vector-eps.png'} layout="fill" />
-                </div>
-                <p className="text-gray-400">Sign In</p>
-            </div>
-        </div>
+            {
+                session ? (
+                    <div onClick={() => signOut()} className="hidden lg:flex border border-gray-100 items-center cursor-pointer space-x-2 p-2">
+                        <div className="relative h-5 w-5 flex-shrink-0">
+                            <Image objectFit="contain" src={'https://logoeps.com/wp-content/uploads/2014/09/52053-reddit-logo-icon-vector-icon-vector-eps.png'} layout="fill" />
+                        </div>
+                        <div className="flex-1 text-xs">
+                            <p className="truncate">{session.user?.name}</p>
+                            <p className="text-gray-400">Karma 1</p>
+                        </div>
+                        <ChevronDownIcon className="h-5 w-5 text-gray-500" />
+                    </div>
+                ) : (
+                    <div onClick={() => signIn()} className="hidden lg:flex border border-gray-100 items-center cursor-pointer space-x-2 p-2">
+                        <div className="relative h-5 w-5 flex-shrink-0">
+                            <Image objectFit="contain" src={'https://logoeps.com/wp-content/uploads/2014/09/52053-reddit-logo-icon-vector-icon-vector-eps.png'} layout="fill" />
+                        </div>
+                        <p className="text-gray-400">Sign In</p>
+                    </div >
+                )
+            }
+
+        </div >
     )
 }
 
