@@ -4,7 +4,10 @@ import Avatar from './Avatar'
 import { PhotographIcon, LinkIcon } from '@heroicons/react/outline'
 import { useForm, SubmitHandler } from "react-hook-form";
 import { useMutation } from '@apollo/client';
-import { ADD_POST } from '../graphql/mutations';
+import { ADD_POST, ADD_SUBREDDIT } from '../graphql/mutations';
+import client from '../apollo-client';
+import { GET_SUBREDDIT_BY_TOPIC } from '../graphql/queries';
+import toast from 'react-hot-toast';
 
 type Inputs = {
     postTitle: string,
@@ -16,6 +19,7 @@ type Inputs = {
 function PostBox() {
     const { data: session } = useSession();
     const [addPost] = useMutation(ADD_POST);
+    const [addSubreddit] = useMutation(ADD_SUBREDDIT)
     const {
         register,
         setValue,
@@ -25,11 +29,79 @@ function PostBox() {
     } = useForm<Inputs>();
     // const onSubmit: SubmitHandler<Inputs> = data => console.log(data);
     const onSubmit = handleSubmit(async (formData) => {
-        console.log(formData);
+        const notification = toast.loading("Creating new post...");
         try {
+            // query for subreddit topic
+            const {
+                data: { getSubredditListByTopic }
+            } = await client.query({
+                query: GET_SUBREDDIT_BY_TOPIC,
+                variables: {
+                    topic: formData.subReddit
+                }
+            })
 
+            // check if a subreddit exist
+            const subredditExists = getSubredditListByTopic.length > 0;
+
+            if (!subredditExists) {
+                // create subreddit
+                console.log("subreddit is  new-> creating new subreddit")
+                const { data: { insertSubreddit: newSubreddit } } = await addSubreddit({
+                    variables: {
+                        topic: formData.subReddit
+                    }
+                })
+                console.log('creating post...', formData);
+                const image = formData.postImage || "";
+
+                // new post
+                const { data: { insertPost: newPost }
+                } = await addPost({
+                    variables: {
+                        body: formData.postBody,
+                        image: image,
+                        subreddit_id: newSubreddit.id,
+                        title: formData.postTitle,
+                        username: session?.user?.name
+                    }
+                })
+                console.log('new post created', newPost);
+            } else {
+                // useExisting subreddit 
+                console.log("subreddit exists-> using existing subreddit");
+                console.log(getSubredditListByTopic)
+
+                const image = formData.postImage || "";
+
+                // new post
+                const { data: { insertPost: newPost }
+                } = await addPost({
+                    variables: {
+                        body: formData.postBody,
+                        image: image,
+                        subreddit_id: getSubredditListByTopic[0].id,
+                        title: formData.postTitle,
+                        username: session?.user?.name
+                    }
+                })
+
+                console.log("newPost added", newPost)
+            }
+
+            // reset values
+            setValue("postBody", '');
+            setValue("postTitle", '');
+            setValue("postImage", '');
+            setValue("subReddit", '');
+            toast.success("new post created...", {
+                id: notification
+            })
         } catch (error) {
-
+            console.log(error)
+            toast.error("oops something went wrong!", {
+                id: notification
+            })
         }
 
     })
