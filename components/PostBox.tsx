@@ -5,9 +5,10 @@ import { PhotographIcon, LinkIcon } from '@heroicons/react/outline'
 import { useForm, SubmitHandler } from "react-hook-form";
 import { useMutation } from '@apollo/client';
 import { ADD_POST, ADD_SUBREDDIT } from '../graphql/mutations';
-import client from '../apollo-client';
+// import client from '../apollo-client';
 import { GET_SUBREDDIT_BY_TOPIC } from '../graphql/queries';
 import toast from 'react-hot-toast';
+import { initializeApollo } from '../apollo-client';
 
 type Inputs = {
     postTitle: string,
@@ -17,6 +18,7 @@ type Inputs = {
 };
 
 function PostBox() {
+    const apolloClient = initializeApollo();
     const { data: session } = useSession();
     const [addPost] = useMutation(ADD_POST);
     const [addSubreddit] = useMutation(ADD_SUBREDDIT)
@@ -34,14 +36,14 @@ function PostBox() {
             // query for subreddit topic
             const {
                 data: { getSubredditListByTopic }
-            } = await client.query({
+            } = await apolloClient.query({
                 query: GET_SUBREDDIT_BY_TOPIC,
                 variables: {
                     topic: formData.subReddit
                 }
             })
 
-            // check if a subreddit exist
+            // check if a subredit exist
             const subredditExists = getSubredditListByTopic.length > 0;
 
             if (!subredditExists) {
@@ -54,8 +56,6 @@ function PostBox() {
                 })
                 console.log('creating post...', formData);
                 const image = formData.postImage || "";
-
-                // new post
                 const { data: { insertPost: newPost }
                 } = await addPost({
                     variables: {
@@ -73,8 +73,6 @@ function PostBox() {
                 console.log(getSubredditListByTopic)
 
                 const image = formData.postImage || "";
-
-                // new post
                 const { data: { insertPost: newPost }
                 } = await addPost({
                     variables: {
