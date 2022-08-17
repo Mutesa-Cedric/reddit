@@ -20,12 +20,12 @@ const errorLink = onError(({ graphQLErrors, networkError }) => {
 });
 
 const httpLink = new HttpLink({
-  uri: process.env.API_URL, // Server URL (must be absolute)
+  uri: "https://wuhan.stepzen.net/api/rousing-sabertooth/__graphql", // Server URL (must be absolute)
   //   credentials: "same-origin", // Additional fetch() options like `credentials` or `headers`
   headers: {
-    Authorization: `apikey ${process.env.NEXT_PUBLIC_STEPZEN_KEY}`,
+    Authorization: `ApiKey ${process.env.NEXT_PUBLIC_STEPZEN_KEY}`,
   },
-});
+}); 
 
 function createApolloClient() {
   return new ApolloClient({
